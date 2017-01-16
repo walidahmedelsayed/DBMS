@@ -1,0 +1,454 @@
+#!/usr/bin/ksh
+PS3="---------------------------------------------------------------------------
+Your Choice:
+------------
+"
+function createDatbase {
+
+   clear
+   cd /home/walid/Desktop/ShellProject/
+   echo "-----------------------------------------------------------------------"
+   echo "Enter The Name Of Database You Want To Create: "
+   echo "----------------------------------------------"
+   read dbname
+   export dbname
+   if [ ${#dbname} -eq 0 ] ;
+   then
+   echo "-----------------------------------------------------------------------"
+   echo "Sorry You Didn't Enter Any Name"
+   else
+   folders=`ls /home/walid/Desktop/ShellProject/`
+   typeset flag=1;
+   for i in $folders
+   do
+   if [ ! -d $dbname ] ;
+   then
+   flag=1;
+   else
+   flag=0;
+   fi
+   done
+
+   if [[ flag -eq 1 ]] ;
+   then
+   mkdir $dbname
+   mkdir $dbname/tabledata/
+   mkdir $dbname/tableinfo/
+   echo "-----------------------------------------------------------------------"
+   echo "$dbname Database Created"
+   else
+   echo "-----------------------------------------------------------------------"
+   echo "Database With The Same Name Already Existed"
+   fi
+   fi
+}
+
+function usedb {
+  clear
+  if [ `ls /home/walid/Desktop/ShellProject | wc -l` -eq 0 ] ;
+  then
+  echo "There Is No Databases"
+  else
+  echo "-------------------------------------------------------------"
+  echo "Type in The Name Of Database: "
+  echo "-----------------------------"
+  ls /home/walid/Desktop/ShellProject/
+  echo "-------------------------------------------------------------"
+  read chosdb
+  export chosdb
+  if [ ${#chosdb} -eq 0 ] ;
+  then
+  echo "-------------------------------------------------------------"
+  echo "Sorry You Didn't Enter Any Name"
+  elif [ -d $chosdb ] ;
+  then
+  ls $chosdb;
+  echo "-------------------------------------------------------------"
+  echo "You Chosed ($chosdb) Database"
+  cd $chosdb
+  usedbMenu
+  else
+  echo "Wrong Database Name"
+  fi
+  fi
+}
+
+function deleteDatabase {
+   clear
+   if [ `ls /home/walid/Desktop/ShellProject/ | wc -l` -eq 0 ] ;
+   then
+   echo "There Is No Databases"
+   else
+   echo "-----------------------------------------------------------------------"
+   echo "Enter The Name Of Database You Want To Delete"
+   echo "---------------------------------------------"
+   cd /home/walid/Desktop/ShellProject/
+   ls
+   echo "-----------------------------------------------------------------------"
+   read dabname
+   export dabname
+   if [ ${#dabname} -eq 0 ] ;
+   then
+   echo "-----------------------------------------------------------------------"
+   echo "Sorry You Didn't Enter Any Name"
+   elif [ -d $dabname ] ;
+   then
+   rm -r $dabname
+   echo "-----------------------------------------------------------------------"
+   echo "Database $dabname Deleted Successfully"
+   else
+   echo "-----------------------------------------------------------------------"
+   echo "There Is No Database Called $dabname"
+   fi
+   fi
+}
+
+function showDatabases {
+     clear
+     if [ `ls /home/walid/Desktop/ShellProject | wc -l` -eq 0 ] ;
+     then
+     echo "-----------------------------------------------------------------------"
+     echo "There Is No Databases"
+     else
+     echo "-----------------------------------------------------------------------"
+     echo "The Existing Databases :"
+     echo "------------------------"
+     ls /home/walid/Desktop/ShellProject/
+     fi
+}
+
+function deleteTable {
+     clear
+  if [ `ls /home/walid/Desktop/ShellProject/$chosdb/tableinfo | wc -l` -eq 0 ] ;
+     then
+     echo "There Is No Tables To Delete"
+  else
+     echo "Type In The Name Of Table You Want To Delete:"
+     echo "---------------------------------------------"
+     cd /home/walid/Desktop/ShellProject/$chosdb/tableinfo
+     ls
+     echo "------------------------------------------------------"
+     read tname
+     if [ ${#tname} -eq 0 ] ;
+     then
+     echo "------------------------------------------------------"
+     echo "Sorry You Didn't Enter Any Name"
+     elif [ -f $tname ] ;
+     then
+     rm $tname
+     cd /home/walid/Desktop/ShellProject/$chosdb/tabledata
+     rm $tname
+     echo "------------------------------------------------------"
+     echo "Table $tname Deleted Successfully"
+     echo "------------------------------------------------------"
+     else
+     echo "------------------------------------------------------"
+     echo "There Is No Table Called $tname"
+     fi
+     fi
+}
+
+function deleteRecord {
+  clear
+  noOfTables=`ls /home/walid/Desktop/ShellProject/$chosdb/tabledata | wc -w`;
+  for i in `seq 1 $noOfTables`
+  do
+    tables[$i]=`cat /home/walid/Desktop/ShellProject/$chosdb/tabledata/$tbname | cut -d: -f1 | cut -d$'\n' -f1`
+  done
+  select choice in ${tables[@]} 'Back'
+  do
+  case $REPLY in
+    [`seq 1 $noOfTables`] )
+   while true
+    do
+      echo "Please Enter The Primary Key For The Record";
+      read pk;
+      Record=`awk -v val="$pk" '{ if( $1 == val) print $0 ; }' $1/tabledata/$tbname`;
+      val = $pk;
+      echo Record;
+      if [ $Record ] ;
+      then
+        echo "Record Found And Deleted"
+        deleteCommand=`awk - '{ if( $1 != val) print $0 ; }' $1/tabledata/$choice >> $1/tabledata/${choice}.tmp | mv $1/tabledata/${choice}.tmp $1/tabledata/${choice}`;
+
+      else
+        echo "Record Not Found"
+      fi
+    done
+    break
+    ;;
+  'back' )
+  break
+  ;;
+
+  *) echo "Thank You"
+     echo $Record
+  ;;
+   esac
+  done
+}
+function deleteTableMenu {
+     clear
+     echo "---------------------------------------------------------"
+     select choice in "Delete Table" "Delete Record" "Back"
+     do
+     case $REPLY in
+     1) deleteTable
+        read
+        deleteTableMenu
+      ;;
+     2) deleteRecord
+     ;;
+     3) mainMenu
+      ;;
+     *) echo "Invalid Choice"
+        ;;
+     esac
+     done
+}
+
+function createTable {
+   clear
+   echo "Enter The Table Name: "
+   read tbname
+   if [ ${#tbname} -eq 0 ] ;
+   then
+   echo "You Didn't Enter Any Name"
+   else
+
+
+   tables=`ls /home/walid/Desktop/ShellProject/$chosdb`
+   typeset flag=1;
+   for j in $tables
+   do
+   if [ ! -f "$tbname" ] ;
+   then
+   flag=1;
+   else
+   flag=0;
+   fi
+   done
+   if [[ flag -eq 1 ]] ;
+   then
+echo "Enter The Number of Columns : "
+read nocol
+for (( i=1; i<=$nocol; i++ ))
+do
+echo "Enter The Name of Column $i"
+read colname[i]
+echo "Choose The Datatype of Column ${colname[i]}"
+select choice in "Integer" "String"
+do
+case $choice in
+"Integer") columnType[i]="Integer";
+break;;
+"String") columnType[i]="String";
+break;;
+*) echo "Invalid Choice"
+esac
+done
+done
+echo "Choose Column To Be A Primary Key"
+select choice in ${colname[@]}
+do
+case $choice in
+*)
+primaryKey=${colname[$REPLY]}
+export primaryKey
+echo "The Primary Key is Column $REPLY" ;
+break;;
+esac
+done
+ echo "---------------------------------------------------------"
+  touch /home/walid/Desktop/ShellProject/$chosdb/tableinfo/$tbname;
+  touch /home/walid/Desktop/ShellProject/$chosdb/tabledata/$tbname;
+   echo "primarykey:$primaryKey" > /home/walid/Desktop/ShellProject/$chosdb/tableinfo/$tbname ;
+
+   for i in `seq 1 $nocol`
+   do
+   echo "${colname[i]}:${columnType[i]}" >> /home/walid/Desktop/ShellProject/$chosdb/tableinfo/$tbname;
+   done
+
+   echo "Table $tbname Was Created"
+   else
+   echo "---------------------------------------------------------"
+   echo "Table With The Same Name Already Existed"
+   fi
+   fi
+}
+
+function insertData {
+
+	let noOfColumns=`cat /home/walid/Desktop/ShellProject/$chosdb/tableinfo/$1 | wc -l`;
+ ((loops=$noOfColumns-1));
+ for i in `seq 1 $loops`
+ do
+  primaryKey=`cat /home/walid/Desktop/ShellProject/$chosdb/tabledata/$1 | cut -d: -f1 | cut -d$'\n' -f1`
+done
+  data=""
+
+  for i in `seq 1 $loops`
+	do
+
+
+
+	 	echo "Please Enter value for column ${colname[i]} with type ${columnType[i]}"
+	 	read  value
+    if [[ $primaryKey == $value ]] ;
+    then
+      echo "--------------------------"
+      echo "Sorry Repeated Primary Key"
+      echo "--------------------------"
+      read
+      modifyMenu;
+
+    else
+    data+="$value:"
+
+    if [[ $i -eq ${#colname[@]} ]]; then
+      echo $data >> /home/walid/Desktop/ShellProject/$chosdb/tabledata/$tbname
+
+    fi
+
+    fi
+  done
+  echo "--------------------------------"
+  echo "Record was inserted Successfully"
+  echo "--------------------------------"
+}
+
+function insert {
+  clear
+  echo "Select Table to insert into " ;
+  cd /home/walid/Desktop/ShellProject/$chosdb/tableinfo
+  noOfTables=`ls  /home/walid/Desktop/ShellProject/$chosdb/tableinfo | wc -w ` ;
+
+	for i in `seq 1 $noOfTables`
+	do
+		tables[$i]=`ls /home/walid/Desktop/ShellProject/$chosdb/tableinfo | tr " " "\n" | tr "\n" ":" | cut -f$i -d:` ;
+
+	done
+
+
+	select choice in `ls  /home/walid/Desktop/ShellProject/$chosdb/tableinfo` 'Back'
+	do
+	case $REPLY in
+	[`seq 1 $noOfTables`] )
+
+			insertData $choice ;
+			;
+      read;
+		modifyMenu;;
+		'Back' )
+				return 0 ;
+				;;
+		* )
+		echo "invalid input! Please try again "
+	;;
+	esac
+	done
+
+}
+function showTables {
+     clear
+     echo "---------------------------------------------------------"
+     if [ `ls /home/walid/Desktop/ShellProject/$chosdb/tableinfo | wc -l` -eq 0 ] ;
+     then
+     echo "There Is No Tables To Show"
+     else
+     echo "---------------------------------------------------------"
+     echo "The Existing Tables:"
+     echo "--------------------"
+     ls /home/walid/Desktop/ShellProject/$chosdb/tableinfo
+     fi
+
+}
+function modifyMenu {
+  clear
+  select choice in "Insert Data" "Update Data" "back"
+  do
+    case $REPLY in
+      1) insert
+      ;;
+      2)
+      ;;
+      3) usedbMenu
+      ;;
+      *) echo "Invalid Choice"
+    esac
+  done
+}
+
+function usedbMenu {
+  clear
+  echo "-------------------------------------------------------------"
+  select choice in "Create Table" "Show Tables" "Display Table" "Modify Table" "Delete" "Back"
+  do
+  case $REPLY in
+  1)  createTable
+      read
+      usedbMenu
+      ;;
+  2) showTables
+     /home/walid/Desktop/ShellProject/$chosdb/tabledata/
+     usedbMenu
+     ;;
+  3) echo "Choose Table To Display"
+     echo "-----------------------"
+    ls /home/walid/Desktop/ShellProject/$chosdb/tabledata/
+     echo "------------------------------------------------------------"
+    read tb
+    cat /home/walid/Desktop/ShellProject/$chosdb/tabledata/$tb
+
+  ;;
+  4) modifyMenu
+  ;;
+  5) deleteTableMenu
+     read
+     usedbMenu
+     ;;
+  6) mainMenu
+     ;;
+  *) echo "Invalid Choice"
+     ;;
+  esac
+  done
+}
+
+function mainMenu {
+  clear
+  echo "--------------------------------------------------------------------------"
+  echo "                              Welcome To My DBMS                          "
+  echo "--------------------------------------------------------------------------"
+  select choice in "Create Database" "Use Existing Database" "Delete Database" "Show Databases" "Exit"
+  do
+  case $REPLY in
+
+  1) createDatbase
+     read
+     mainMenu
+     ;;
+
+  2) usedb
+     read
+     mainMenu
+     ;;
+  3) deleteDatabase
+     read
+     mainMenu
+     ;;
+  4) showDatabases
+     read
+     mainMenu
+     ;;
+  5) exit
+     break;;
+
+  *) echo "Invalid Choice"
+     ;;
+  esac
+  done
+
+}
+
+mainMenu
